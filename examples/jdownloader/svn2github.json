@@ -28,6 +28,8 @@
       ]
     },
     {
+      "enabled": false,
+      "comment": "repo size over 1.6GB is too large for my github free account. limit is 1GB",
       "type": "git",
       "write": true,
       "branches": {

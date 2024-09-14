@@ -348,14 +348,14 @@ def sync_github_mirror(args):
         svn_url = svn_inputs[0].remotes[0].url
         debug("svn_url =", svn_url)
 
-        git_outputs = list(filter(lambda repo: repo.type == "git" and hasattr(repo.branches, "main") and getattr(repo, "write", False) == True, config.repos))
+        git_outputs = list(filter(lambda repo: getattr(repo, "enabled", True) == True and repo.type == "git" and hasattr(repo.branches, "main") and getattr(repo, "write", False) == True, config.repos))
         if len(git_outputs) != 1:
             raise Exception("""config error: the config.outputs array must have exactly one { "type": "git", "write": true, "branches": { "main": "..." } } entry""")
             # TODO implement multiple output repos
         git_url = git_outputs[0].remotes[0].url
         debug("git_url =", git_url)
 
-        svn_outputs = list(filter(lambda repo: repo.type == "svn" and getattr(repo, "original", False) == False and getattr(repo, "write", False) == True, config.repos))
+        svn_outputs = list(filter(lambda repo: getattr(repo, "enabled", True) == True and repo.type == "svn" and getattr(repo, "original", False) == False and getattr(repo, "write", False) == True, config.repos))
         if len(git_outputs) != 1:
             raise Exception("""config error: the config.outputs array must have exactly one { "type": "svn", "write": true } entry""")
             # TODO implement multiple output repos
@@ -869,6 +869,7 @@ def sync_github_mirror(args):
         info("pushing all git repos to github")
 
         #svn2git_rules_file_list = glob.glob(git_repos_dir + "/*.rules")
+
         for svn2git_rules_file in svn2git_rules_file_list:
             debug(f"svn2git_rules_file = {svn2git_rules_file}")
             #svn2git_rules_file = os.path.basename(svn2git_rules_file)
