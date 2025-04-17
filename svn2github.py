@@ -928,6 +928,16 @@ def sync_github_mirror(args):
 
 def main():
 
+    deps = [
+        "svn",
+        "svn-all-fast-export",
+        "rsync",
+        "git",
+    ]
+
+    for dep in deps:
+        assert shutil.which(dep), f"missing command: {dep}"
+
     parser = argparse.ArgumentParser(
         description="Mirror SVN repositories to GitHub",
         formatter_class=argparse.RawTextHelpFormatter
