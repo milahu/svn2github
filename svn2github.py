@@ -198,6 +198,11 @@ def svnsync_init(svn_url, svnrepo_dir):
     run(["svnadmin", "create", "--compatible-version=1.9.0", os.path.basename(svnrepo_dir)], cwd=os.path.dirname(svnrepo_dir))
     #run(["svnsync", "initialize", "file://"+svnrepo_dir, config['svn_url']])
     #run(["svnsync", "initialize", "file://"+svnrepo_dir, git_svn_info.svn_url]) # FIXME
+    # fix: svnsync: E165006: Repository has not been enabled to accept revision propchanges
+    hookfile = svnrepo_dir+"/hooks/pre-revprop-change"
+    with open(hookfile, "w") as f:
+        f.write("\n".join(["#!/bin/sh", "exit 0"]))
+    os.chmod(hookfile, 0o755)
     run(["svnsync", "init", "file://"+svnrepo_dir, svn_url]) # FIXME
     # svnsync initialize: --source-username user --source-password pass
 
@@ -219,7 +224,7 @@ def svnsync_sync(svnrepo_dir):
     args = ["svnsync", "sync", "file://"+svnrepo_dir]
     info("run: "+" ".join(args))
     cmd = popen(args, universal_newlines=True)
-    pattern = re.compile("^Committed revision ([0-9]+)\.")
+    pattern = re.compile(r"^Committed revision ([0-9]+)\.")
     while True:
         line = cmd.stdout.readline()
         #info("line = " + repr(line))
@@ -349,11 +354,13 @@ def sync_github_mirror(args):
         debug("svn_url =", svn_url)
 
         git_outputs = list(filter(lambda repo: getattr(repo, "enabled", True) == True and repo.type == "git" and hasattr(repo.branches, "main") and getattr(repo, "write", False) == True, config.repos))
+        '''
         if len(git_outputs) != 1:
             raise Exception("""config error: the config.outputs array must have exactly one { "type": "git", "write": true, "branches": { "main": "..." } } entry. actual number: """ + str(len(git_outputs)))
             # TODO implement multiple output repos
         git_url = git_outputs[0].remotes[0].url
         debug("git_url =", git_url)
+        '''
 
         svn_outputs = list(filter(lambda repo: getattr(repo, "enabled", True) == True and repo.type == "svn" and getattr(repo, "original", False) == False and getattr(repo, "write", False) == True, config.repos))
         if len(svn_outputs) != 1:
@@ -368,7 +375,7 @@ def sync_github_mirror(args):
     else:
 
         debug(f"no config file {config_file}")
-        raise Exception("""no config file. not implemented. please add config file {config_file}""")
+        raise Exception(f"""no config file. not implemented. please add config file {config_file}""")
         #if not svn_url:
         #    raise "you must set svn_url on the first run"
         #config['svn_url'] = svn_url
